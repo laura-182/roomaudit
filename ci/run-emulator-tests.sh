@@ -2,6 +2,9 @@
 # Runs the instrumented walkthrough test on the connected emulator and keeps logcat for debugging.
 set -u
 adb logcat -c || true
+# Hide "app isn't responding" system dialogs (slow CI emulators trigger them for the launcher)
+adb shell settings put global hide_error_dialogs 1 || true
+adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS > /dev/null 2>&1 || true
 ./gradlew --no-daemon connectedDebugAndroidTest
 status=$?
 adb logcat -d > logcat.txt || true

@@ -18,6 +18,8 @@ import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.services.storage.TestStorage
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -33,9 +35,27 @@ class WalkthroughTest {
     @get:Rule
     val rule = createAndroidComposeRule<MainActivity>()
 
+    private val device: UiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+
+    /**
+     * Slow CI emulators sometimes show a system "<app> isn't responding" dialog (e.g. for the launcher).
+     * It steals window focus from our app, so tap "Wait" to dismiss it.
+     */
+    private fun dismissSystemDialogs() {
+        repeat(3) {
+            val wait = device.findObject(By.text("Wait")) ?: return
+            if (device.findObject(By.textContains("isn't responding")) == null) return
+            wait.click()
+            device.waitForIdle()
+        }
+    }
+
     private fun waitFor(matcher: SemanticsMatcher, timeoutMs: Long = 15_000) {
         try {
-            rule.waitUntil(timeoutMs) { rule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty() }
+            rule.waitUntil(timeoutMs) {
+                dismissSystemDialogs()
+                rule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
+            }
         } catch (e: Throwable) {
             // Make failures easy to diagnose: save what was on screen and describe it in the error.
             runCatching { shot("zz-failure") }
@@ -47,6 +67,7 @@ class WalkthroughTest {
     private fun waitForText(text: String, substring: Boolean = false) = waitFor(hasText(text, substring = substring))
 
     private fun shot(name: String) {
+        dismissSystemDialogs()
         rule.waitForIdle()
         Thread.sleep(700) // let ripples / snackbars settle so the screenshot is clean
         val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
