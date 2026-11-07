@@ -9,6 +9,8 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
@@ -32,7 +34,14 @@ class WalkthroughTest {
     val rule = createAndroidComposeRule<MainActivity>()
 
     private fun waitFor(matcher: SemanticsMatcher, timeoutMs: Long = 15_000) {
-        rule.waitUntil(timeoutMs) { rule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty() }
+        try {
+            rule.waitUntil(timeoutMs) { rule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty() }
+        } catch (e: Throwable) {
+            // Make failures easy to diagnose: save what was on screen and describe it in the error.
+            runCatching { shot("zz-failure") }
+            val tree = runCatching { rule.onRoot().printToString(maxDepth = 30) }.getOrElse { "<no tree: $it>" }
+            throw AssertionError("Timed out waiting for ${matcher.description}. Screen was:\n$tree", e)
+        }
     }
 
     private fun waitForText(text: String, substring: Boolean = false) = waitFor(hasText(text, substring = substring))

@@ -7,7 +7,7 @@ status=$?
 adb logcat -d > logcat.txt || true
 if [ $status -ne 0 ]; then
   echo "===== Test failure details ====="
-  find app/build/outputs/androidTest-results -name '*.xml' -exec sed -n '/<failure/,/<\/failure>/p' {} \; | head -60
+  find app/build/outputs/androidTest-results -name '*.xml' -exec sed -n '/<failure/,/<\/failure>/p' {} \; | head -400
   echo "===== App crashes in logcat ====="
   grep -A 25 "FATAL EXCEPTION" logcat.txt | head -60 || true
 fi

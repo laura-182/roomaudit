@@ -27,6 +27,8 @@ jobs:
   emulator:
     # Runs the app on an Android emulator and saves screenshots of each screen.
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -60,3 +62,15 @@ jobs:
             app/build/outputs/connected_android_test_additional_output/
             app/build/reports/androidTests/
             logcat.txt
+      - name: Publish screenshots to the emulator-screenshots branch
+        if: always() && github.event_name != 'pull_request'
+        run: |
+          dir=$(find app/build/outputs/connected_android_test_additional_output -name '*.png' -printf '%h\n' | head -1)
+          [ -n "$dir" ] || { echo "No screenshots"; exit 0; }
+          mkdir -p /tmp/shots && cp "$dir"/*.png /tmp/shots/
+          cd /tmp/shots
+          git init -q -b emulator-screenshots
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A && git commit -qm "Emulator screenshots for ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" emulator-screenshots
