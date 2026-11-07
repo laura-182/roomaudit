@@ -80,11 +80,12 @@ fun RoomsScreen(
     Scaffold(
         topBar = { TopAppBar(title = { Text("My Home") }) },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { showAdd = true },
-                icon = { Icon(Icons.Filled.Add, null) },
-                text = { Text("Add room") },
-            )
+            ExtendedFloatingActionButton(onClick = { showAdd = true }) {
+                // Content-slot overload keeps the label in the accessibility tree (screen readers, UI tests).
+                Icon(Icons.Filled.Add, null)
+                Spacer(Modifier.width(12.dp))
+                Text("Add room")
+            }
         },
     ) { padding ->
         val list = rows

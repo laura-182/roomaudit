@@ -113,11 +113,12 @@ fun RoomDetailScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { onAssess(vm.roomId) },
-                icon = { Icon(Icons.Filled.Check, null) },
-                text = { Text("New assessment") },
-            )
+            ExtendedFloatingActionButton(onClick = { onAssess(vm.roomId) }) {
+                // Content-slot overload keeps the label in the accessibility tree (screen readers, UI tests).
+                Icon(Icons.Filled.Check, null)
+                Spacer(Modifier.width(12.dp))
+                Text("New assessment")
+            }
         },
     ) { padding ->
         val s = state ?: return@Scaffold
