@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
@@ -153,7 +154,8 @@ fun AssessmentScreen(
         LazyColumn(
             Modifier
                 .fillMaxSize()
-                .padding(padding),
+                .padding(padding)
+                .testTag("assess-list"),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -197,7 +199,10 @@ private fun CategoryCard(category: CategoryWithItems, vm: AssessmentViewModel) {
                     modifier = Modifier.weight(1f),
                 )
                 if (category.items.isNotEmpty()) {
-                    TextButton(onClick = { vm.rateCategory(category, Rating.GREEN) }) { Text("All good") }
+                    TextButton(
+                        onClick = { vm.rateCategory(category, Rating.GREEN) },
+                        modifier = Modifier.testTag("allgood|${category.category.name}"),
+                    ) { Text("All good") }
                 }
             }
             if (category.items.isEmpty()) {
@@ -207,6 +212,7 @@ private fun CategoryCard(category: CategoryWithItems, vm: AssessmentViewModel) {
                 Column(Modifier.padding(vertical = 6.dp)) {
                     Text(item.name, style = MaterialTheme.typography.bodyLarge)
                     RatingSelector(
+                        tagPrefix = "rate|${category.category.name}|${item.name}",
                         selected = vm.ratings[item.id],
                         onSelect = { vm.rate(item, it) },
                         modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
@@ -218,7 +224,12 @@ private fun CategoryCard(category: CategoryWithItems, vm: AssessmentViewModel) {
 }
 
 @Composable
-fun RatingSelector(selected: Rating?, onSelect: (Rating) -> Unit, modifier: Modifier = Modifier) {
+fun RatingSelector(
+    selected: Rating?,
+    onSelect: (Rating) -> Unit,
+    modifier: Modifier = Modifier,
+    tagPrefix: String = "rate",
+) {
     val options = listOf(Rating.RED, Rating.YELLOW, Rating.GREEN)
     SingleChoiceSegmentedButtonRow(modifier) {
         options.forEachIndexed { index, rating ->
@@ -226,6 +237,7 @@ fun RatingSelector(selected: Rating?, onSelect: (Rating) -> Unit, modifier: Modi
                 selected = selected == rating,
                 onClick = { onSelect(rating) },
                 shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                modifier = Modifier.testTag("$tagPrefix|${rating.name}"),
                 colors = SegmentedButtonDefaults.colors(
                     activeContainerColor = rating.color,
                     activeContentColor = Color.White,
